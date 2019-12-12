@@ -8,8 +8,7 @@ NBITS=32 # increase this is comparing worth with Jeff Bezos or Mark Zuckerberg
 
 # we work modulo this prime
 P = (1<<510)+15 # yes it happens to be prime
-G = 6 # yes it is a primitive root, that is a generator of the multiplicative group
-    
+
 SECURITY=512
 
 # setup logging
@@ -63,6 +62,7 @@ def sha512(s):
 def hashes(s, n=NBITS):
     return [*(sha512(str(x)) for x in s), *(rand512() for i in range(n-len(s)))]
 
+
 # compute x^e, b y repeated squaring, modulo p
 def modpow(x, e, p=P):
     r, t = ((x % p) if (e & 1) else 1), x
@@ -74,25 +74,6 @@ def modpow(x, e, p=P):
         e >>= 1
     return r
 
-# PM1FACTORS = sympy.factorint(P-1)
-
-# def is_primitive_root(x, p=P, factors=PM1FACTORS):
-#     for factor, multiplicity in factors.items():
-#         v = modpow(x, (p-1) // factor)
-#         if v == 1:
-#             return False
-#     return True
-
-# def next_primitive_root(x, p=P, factors=PM1FACTORS):
-#     while not is_primitive_root(x, p, factors):
-#         x = (x+1) % p
-#     return x
-
-def next_coprime(b, n):
-    while sympy.gcd(b, n) != 1:
-        b += 1
-    return b
-        
 # compute a number relatively prime to b, that is,
 # a number r so that r, b have no common factor
 def rand_coprime(b):
@@ -117,16 +98,12 @@ LOG.info('computing my downs/ups, plus padding to hide their sizes')
 my_downs = hashes(s_down(val))
 my_ups = hashes(s_up(val))
 
-LOG.info('making hashes prime to P-1...')
-my_downs = [next_coprime(x, P-1) for x in my_downs]
-my_ups = [next_coprime(x, P-1) for x in my_ups]
-
 LOG.info('generating a private key')
 my_key = rand_coprime(P-1)
 
 LOG.info('encrypting and shuffling my downs/ups')
-M_my_downs = [modpow(G, (x*my_key) % (P-1)) for x in my_downs]
-M_my_ups = [modpow(G, (x*my_key) % (P-1)) for x in my_ups]
+M_my_downs = [modpow(x, my_key) for x in my_downs]
+M_my_ups = [modpow(x, my_key) for x in my_ups]
 random.shuffle(M_my_downs)
 random.shuffle(M_my_ups)
 

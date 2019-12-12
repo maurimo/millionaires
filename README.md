@@ -25,3 +25,8 @@ My set is encrypted with my key (`x` -> `x^e`, for all `x` in my set) and sent t
 the other party does the same (`y` -> `y^f`, for all `y` in his set). The other party's `y^f` are encrypted
 with my key `y^ef` and sent back (scrambled), while we also retrieve `x^ef`. Every party can now compare the
 scrambled sets and check if they have non-empty intersection.
+
+Except for the older (unsafer) millionaires_old.py, the `x`s and `y`s are made to be primitive roots modulo `P`.
+If this is not done, their multiplicative order allows to get clues about which of the values `x^ef` corresponds
+to which `x^e` possibly getting clues about which of my elements matches an element of the other party's set.
+This is a security problem, as knowing which element matches allows to get clues about the other party's value.
