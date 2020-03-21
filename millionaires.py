@@ -1,7 +1,7 @@
 
 # disclaimer: this code was written for testing and self-learning, do
 # not use in any serious application, do not expect any serious security!
-import socket, sys, logging, hashlib, random, json, sympy, pickle
+import socket, sys, logging, hashlib, random, json, sympy, pickle, sys
 
 # global settings - make sure those are consistent
 NBITS=32 # increase this is comparing worth with Jeff Bezos or Mark Zuckerberg
@@ -16,6 +16,18 @@ SECURITY=512
 logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(message)s')
 LOG = logging.getLogger(__name__)
 
+def get_pickle(c, size):
+    data = b''
+    for i in range(1000):
+        try:
+            data += c.recv(size)
+            # print('trying to load', len(data), size)
+            return pickle.loads(data)
+        except:
+            continue
+    sys.exit(1)
+
+
 # utility - wait for connection on port, or connect to host:port
 def interact(info):
     info = info.split(':')
@@ -26,7 +38,7 @@ def interact(info):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        sock.bind( ('localhost', port) )
+        sock.bind( ('', port) )
         sock.listen(1)
         connection, client_address = sock.accept()
         LOG.info('Client connected from %s', client_address)
@@ -135,7 +147,7 @@ c = interact(sys.argv[2])
 
 LOG.info('sending my downs/ups encrypted with my key...')
 c.sendall(pickle.dumps([M_my_downs, M_my_ups]))
-H_his_downs, H_his_ups = pickle.loads(c.recv(2*SECURITY*NBITS//8*3))
+H_his_downs, H_his_ups = get_pickle(c, 2*SECURITY*NBITS//8*3)
 LOG.info('...received his downs/ups encrypted with his key')
 
 LOG.info('bi-encrypting (with my key) and shuffling his downs/ups')
@@ -146,7 +158,7 @@ random.shuffle(HM_his_ups)
 
 LOG.info('sending his bi-encrypted downs/ups...')
 c.sendall(pickle.dumps([HM_his_downs, HM_his_ups]))
-HM_my_downs, HM_my_ups = pickle.loads(c.recv(2*SECURITY*NBITS//8*3))
+HM_my_downs, HM_my_ups = get_pickle(c, 2*SECURITY*NBITS//8*3)
 LOG.info('...received my bi-encrypted downs/ups')
 
 LOG.info('n. insections of my_downs and his_ups: %d (is my_value > his_value?)',
